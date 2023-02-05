@@ -9,7 +9,9 @@ from torch.optim import Adam
 from torch.autograd import Variable
 import torchvision
 import pathlib
+
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 transformer=transforms.Compose([
     transforms.Resize((150,150)),
     transforms.RandomHorizontalFlip(),
@@ -17,6 +19,7 @@ transformer=transforms.Compose([
     transforms.Normalize([0.5,0.5,0.5], # 0-1 to [-1,1] , formula (x-mean)/std
                         [0.5,0.5,0.5])
 ])
+
 train_path='C:/Users/dell/Desktop/computervision/basedata/train'
 test_path='C:/Users/dell/Desktop/computervision/basedata/validation'
 
@@ -28,9 +31,11 @@ test_loader=DataLoader(
     torchvision.datasets.ImageFolder(test_path,transform=transformer),
     batch_size=32, shuffle=True
 )
+
 root=pathlib.Path(train_path)
 classes=sorted([j.name.split('/')[-1] for j in root.iterdir()])
 print(classes)
+
 class ConvNet(nn.Module):
     def __init__(self,num_classes=6):
         super(ConvNet,self).__init__()
@@ -57,6 +62,7 @@ class ConvNet(nn.Module):
         output=output.view(-1,32*75*75)
         output=self.fc(output)
         return output
+    
 model=ConvNet(num_classes=6).to(device)
 optimizer=Adam(model.parameters(),lr=0.001,weight_decay=0.0001)
 loss_function=nn.CrossEntropyLoss()
@@ -65,6 +71,7 @@ train_count=len(glob.glob(train_path+'/**/*.jpg'))
 test_count=len(glob.glob(test_path+'/**/*.jpg'))
 print(train_count,test_count)
 best_accuracy=0.0
+
 for epoch in range(num_epochs):
     model.train()
     train_accuracy=0.0
@@ -84,6 +91,7 @@ for epoch in range(num_epochs):
     train_accuracy=train_accuracy/train_count
     train_loss=train_loss/train_count
     model.eval()
+    
     test_accuracy=0.0
     for i, (images,labels) in enumerate(test_loader):
         if torch.cuda.is_available():
@@ -94,6 +102,7 @@ for epoch in range(num_epochs):
         test_accuracy+=int(torch.sum(prediction==labels.data))
     test_accuracy=test_accuracy/test_count
     print('Epoch: '+str(epoch)+' Train Loss: '+str(train_loss)+' Train Accuracy: '+str(train_accuracy)+' Test Accuracy: '+str(test_accuracy))
+    
     if test_accuracy>best_accuracy:
         torch.save(model.state_dict(),'best_checkpoint.model')
         best_accuracy=test_accuracy
